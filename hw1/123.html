@@ -1,0 +1,184 @@
+<html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+
+
+<table align="center">
+    <td>
+        <button id='start' class="switch">START</button>
+        <button id='pasue' class="switch" style="display: none">PAUSE</button>
+    </td>
+    <td>
+        <button id='quartz' class="switch_action" class1="switch_sector" style="display: none">Quartz</button>
+        <button id='analog' class="switch_action">Analog</button>
+        <button id='sector' class1="switch_sector" style="display: none">Sector</button>
+    </td>
+</table>
+
+<script>
+    var renderer, camera, controls, scene, axes;
+    //var stats;              
+    var Angular = 0;
+    var turn = false;
+    var action = "Analog";
+    var aou;
+    var mesh;
+    var flat;
+    //$('#myButton').click(function () {
+    //	axes.material.visible = !axes.material.visible;
+    //});
+
+    init();
+    animate();
+    function init() {
+        renderer = new THREE.WebGLRenderer({
+            antialias: true
+        })
+        //stats = new Stats();///////////////////////FPS
+        //stats.domElement.style.position = 'absolute';
+        //stats.domElement.style.top = '30px';
+        //stats.domElement.style.zIndex = 100;
+        //document.body.appendChild(stats.domElement);
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xAAAAAA);
+        document.body.appendChild(renderer.domElement);
+
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.z = 300;  // important
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        window.addEventListener('resize', onWindowResize, false);
+        scene = new THREE.Scene();
+
+        let gridXZ = new THREE.GridHelper(100, 10, 'red', 'white');
+        //scene.add(gridXZ);
+
+        axes = new THREE.AxisHelper(10);
+        //scene.add(axes);
+
+        //扇形..........................................................
+        var geometry = new THREE.RingGeometry(0.5, 50, 32);
+
+        var material = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            side: THREE.DoubleSide
+        });
+        mesh = new THREE.Mesh(geometry, material);
+
+        var geometry_backgroung = new THREE.RingGeometry(0.5, 50, 32);
+
+        var material_backgroung = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            side: THREE.DoubleSide
+        });
+        var backgroung = new THREE.Mesh(geometry_backgroung, material_backgroung);
+        scene.add(mesh);
+        scene.add(backgroung);
+        //...............................................................
+        aou = buildAou();
+        scene.add(aou);
+
+        var zero = buildzero();
+        scene.add(zero);
+        $('#start').on('click', function () {
+            $('button[class="switch"]').toggle();
+            turn = true;
+
+        });
+        $('#pasue').on('click', function () {
+            $('button[class="switch"]').toggle();
+            turn = false;
+            Sector_action = false;
+        });
+        $('#analog').on('click', function () {
+            $('button[class="switch_action"]').toggle();
+            action = "Analog";
+            flat.material.visible = true;
+            backgroung.material.visible = true;
+        });
+        $('#quartz').on('click', function () {
+            $('button[class1="switch_sector"]').toggle();
+            action = "Quartz";
+        });
+        $('#sector').on('click', function () {
+            $('button[class1="switch_sector"]').toggle();
+            $('button[class="switch_action"]').toggle();
+            action = "Analog";
+            flat.material.visible = false;
+            backgroung.material.visible = false;
+        });
+
+    }
+    function buildAou() {
+
+        var aou = new THREE.Object3D();
+
+        var normalMat = new THREE.MeshNormalMaterial();
+        //var column1 = new THREE.Mesh( new THREE.BoxGeometry (5,5,20), normalMat);
+        flat = new THREE.Mesh(new THREE.BoxGeometry(5, 40, 5), normalMat);
+        //new THREE.BoxGeometry(width, height, depth, widthSegments, heightSegments, depthSegments)
+        //var column2 = new THREE.Mesh( new THREE.BoxGeometry (10,30,10), normalMat);
+
+        aou.add(flat);
+        //aou.add (column2);
+        //column1.position.set (5, 15, -5);
+        flat.position.set(0, 20, 0);
+        //column2.position.set (35, 15, -5);
+
+        return aou;
+    }
+    function buildzero() {
+
+        var aou = new THREE.Object3D();
+
+        var normalMat = new THREE.MeshBasicMaterial({
+            color: 0x000000
+        });
+
+        var flat = new THREE.Mesh(new THREE.BoxGeometry(5, 10, 5), normalMat);
+
+        aou.add(flat);
+        flat.position.set(0, 50, 0);
+        return aou;
+    }
+
+    function animate() {
+        //stats.update();///////////////////////FPS
+        var time;
+        controls.update();
+        if (turn) {
+            if (action == "Quartz") {
+                time = 1000;
+                Angular -= Math.PI / 30;
+            }
+            else if (action == "Analog") {
+                time = 1000 / 24;
+                Angular -= Math.PI / 720;
+            }
+            Angular %= Math.PI * 2;
+            aou.rotation.z = Angular;
+        }
+
+        mesh.geometry = new THREE.RingGeometry(0.5, 50, 32, 2, Math.PI / 2, Angular);
+
+        renderer.render(scene, camera);
+
+        setTimeout(function () {
+            requestAnimationFrame(animate);
+        }, time);
+
+    }
+
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+</script>
+
+</html>
